@@ -30,6 +30,7 @@ data_load_state.text('Loading data...done!')
 if st.checkbox('Show raw data'):
     st.subheader('Raw data')
     st.write(data)
+    st.snow()
 st.subheader('Number of pickups by hour')
 
 #Create and display chart
