@@ -1,12 +1,16 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import ssl
+import certifi
 
-st.title('Uber pickups in NYC')
+# Force default SSL context to use certifi's CA bundle globally
+ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
+
 DATE_COLUMN = 'date/time'
-DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
-         'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
+DATA_URL = ('https://s3-us-west-2.amazonaws.com/streamlit-demo-data/uber-raw-data-sep14.csv.gz')
 
+@st.cache_data
 def load_data(nrows):
     data = pd.read_csv(DATA_URL, nrows=nrows)
     lowercase = lambda x: str(x).lower()
@@ -14,9 +18,26 @@ def load_data(nrows):
     data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
     return data
 
+# Build your UI and call the data sequentially
+st.title('Uber pickups in NYC')
+
 # Create a text element and let the reader know the data is loading.
 data_load_state = st.text('Loading data...')
-# Load 10,000 rows of data into the dataframe.
+
+# Load data into the dataframe.
 data = load_data(10000)
+
 # Notify the reader that the data was successfully loaded.
 data_load_state.text('Loading data...done!')
+
+#Write dataframe to DOM
+st.subheader('Raw data')
+st.write(data)
+st.subheader('Number of pickups by hour')
+
+#Create and display chart
+hist_values = np.histogram(
+    data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
+st.bar_chart(hist_values)
+
+st.subheader('Map of all pickups')
