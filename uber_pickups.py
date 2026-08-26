@@ -1,12 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import ssl
-import certifi
 
-# Force default SSL context to use certifi's CA bundle globally
-ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
-
+#Fetch, read, and cache data
 DATE_COLUMN = 'date/time'
 DATA_URL = ('https://s3-us-west-2.amazonaws.com/streamlit-demo-data/uber-raw-data-sep14.csv.gz')
 
@@ -31,8 +27,9 @@ data = load_data(10000)
 data_load_state.text('Loading data...done!')
 
 #Write dataframe to DOM
-st.subheader('Raw data')
-st.write(data)
+if st.checkbox('Show raw data'):
+    st.subheader('Raw data')
+    st.write(data)
 st.subheader('Number of pickups by hour')
 
 #Create and display chart
@@ -40,4 +37,8 @@ hist_values = np.histogram(
     data[DATE_COLUMN].dt.hour, bins=24, range=(0,24))[0]
 st.bar_chart(hist_values)
 
-st.subheader('Map of all pickups')
+#Attach slider to filter ride times by hour
+hour_to_filter = st.slider('hour', 0, 23, 17)  # min: 0h, max: 23h, default: 17h
+filtered_data = data[data[DATE_COLUMN].dt.hour == hour_to_filter]
+st.subheader(f'Map of all pickups at {hour_to_filter}:00')
+st.map(filtered_data)
